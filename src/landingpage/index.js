@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchMovies } from "../store/redux/movieReducer";
 import Header from "../components/landingpage/header";
 import { Nav } from "../components/landingpage/nav";
 import Profile from "../components/landingpage/profile";
@@ -8,51 +10,35 @@ import { CardSlider } from "../components/landingpage/card";
 import Footer from "../components/landingpage/footer";
 import hero from "../assets/herosection.png";
 import logoKecil from "../assets/logokecil.png";
-import { navItems, profileData, cards, footerData } from "../data/movieData";
-import { getMovies } from "../service/api/firestoreCrud";
+import { cards, footerData, navItems, profileData } from "../data/movieData";
 
 function Index() {
+  const dispatch = useDispatch();
   const navigate = useNavigate();
   const [isMuted, setIsMuted] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [topRating, setTopRating] = useState([]);
-  const [trending, setTrending] = useState([]);
-  const [newRelease, setNewRelease] = useState([]);
   const [daftarSaya, setDaftarSaya] = useState([]);
-  const [loading, setLoading] = useState(true);
+
+  // Get data from Redux store
+  const { topRating, trending, newRelease, loading, error } = useSelector(
+    (state) => state.movies
+  );
 
   useEffect(() => {
     const adminStatus = localStorage.getItem("isAdmin") === "true";
     setIsAdmin(adminStatus);
-    const fetchAllMovies = async () => {
-      try {
-        setLoading(true);
-        const [topRatingData, trendingData, newReleaseData] = await Promise.all(
-          [
-            getMovies("topRating"),
-            getMovies("trending"),
-            getMovies("newRelease"),
-          ]
-        );
 
-        setTopRating(topRatingData);
-        setTrending(trendingData);
-        setNewRelease(newReleaseData);
-      } catch (error) {
-        console.error("Failed to fetch movies:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchAllMovies();
+    // Fetch all movies using Redux
+    dispatch(fetchMovies("topRating"));
+    dispatch(fetchMovies("trending"));
+    dispatch(fetchMovies("newRelease"));
 
     // Load saved movies from localStorage
     const savedMovies = localStorage.getItem("daftarSaya");
     if (savedMovies) {
       setDaftarSaya(JSON.parse(savedMovies));
     }
-  }, []);
+  }, [dispatch]);
 
   useEffect(() => {
     localStorage.setItem("daftarSaya", JSON.stringify(daftarSaya));
@@ -83,8 +69,17 @@ function Index() {
     }
   };
 
+  if (error) {
+    return (
+      <div className="flex-1 flex items-center justify-center">
+        <div className="text-white text-xl">Error: {error}</div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col min-h-screen bg-[#181A1C]">
+      {/* Header */}
       <Header
         logo={footerData.logo}
         logoMobile={logoKecil}
@@ -104,6 +99,7 @@ function Index() {
         />
       </Header>
 
+      {/* Hero Section */}
       <HeroSection
         title="Duty After School"
         subtitle="Sebuah benda tak dikenal mengambil alih dunia. Dalam keputusasaan, Departemen Pertahanan mulai merekrut lebih banyak tentara, termasuk siswa sekolah menengah. Mereka pun segera menjadi pejuang garis depan dalam perang."
@@ -127,19 +123,21 @@ function Index() {
         bgExtended={true}
       />
 
+      {/* Loading or Content */}
       {loading ? (
         <div className="flex-1 flex items-center justify-center">
           <div className="text-white text-xl">Loading movies...</div>
         </div>
       ) : (
         <>
+          {/* Melanjutkan Nonton Film */}
           <section className="py-10 px-4 sm:px-8 md:px-16 lg:px-32 bg-[#181A1C]">
             <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-8 text-left">
               Melanjutkan Nonton Film
             </h2>
             <div className="w-full overflow-hidden">
               <CardSlider
-                cards={cards} // Menggunakan data statis cards
+                cards={cards} // Menggunakan data statis untuk Melanjutkan Nonton Film
                 showBadges={true}
                 isContinueWatching={true}
                 initialVisibleCards={4}
@@ -149,6 +147,7 @@ function Index() {
             </div>
           </section>
 
+          {/* Top Rating */}
           <section className="py-6 sm:py-10 px-4 sm:px-8 md:px-16 lg:px-32 bg-[#181A1C]">
             <div className="flex justify-between items-center mb-8">
               <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-white">
@@ -165,7 +164,7 @@ function Index() {
             </div>
             <div className="w-full overflow-hidden">
               <CardSlider
-                cards={topRating}
+                cards={topRating} // Menggunakan data Redux untuk Top Rating
                 cardClassName="max-w-[180px] sm:max-w-[280px]"
                 showArrows={true}
                 showBadges={true}
@@ -175,6 +174,7 @@ function Index() {
             </div>
           </section>
 
+          {/* Trending */}
           <section className="py-6 sm:py-10 px-4 sm:px-8 md:px-16 lg:px-32 bg-[#181A1C]">
             <div className="flex justify-between items-center mb-8">
               <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-white">
@@ -191,7 +191,7 @@ function Index() {
             </div>
             <div className="w-full overflow-hidden">
               <CardSlider
-                cards={trending}
+                cards={trending} // Menggunakan data Redux untuk Trending
                 cardClassName="max-w-[180px] sm:max-w-[280px]"
                 showArrows={true}
                 showBadges={true}
@@ -201,6 +201,7 @@ function Index() {
             </div>
           </section>
 
+          {/* New Releases */}
           <section className="py-6 sm:py-10 px-4 sm:px-8 md:px-16 lg:px-32 bg-[#181A1C]">
             <div className="flex justify-between items-center mb-8">
               <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-white">
@@ -217,7 +218,7 @@ function Index() {
             </div>
             <div className="w-full overflow-hidden">
               <CardSlider
-                cards={newRelease}
+                cards={newRelease} // Menggunakan data Redux untuk New Releases
                 cardClassName="max-w-[180px] sm:max-w-[280px]"
                 showArrows={true}
                 showBadges={true}
@@ -229,6 +230,7 @@ function Index() {
         </>
       )}
 
+      {/* Footer */}
       <Footer
         logo={footerData.logo}
         genres={footerData.genres}

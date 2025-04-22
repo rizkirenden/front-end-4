@@ -20,12 +20,6 @@ const initialFormState = {
   genre: "",
   newEpisode: false,
   top10: false,
-  imageWidth: "100%",
-  imageHeight: "190px",
-  bgColor: "bg-[#181A1C]",
-  textColor: "text-white",
-  titleSize: "text-lg",
-  cardClassName: "max-w-[180px] sm:max-w-[280px]",
 };
 
 const MovieAdmin = () => {
